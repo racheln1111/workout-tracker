@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Workout Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --rose: #f4a7b9;
+      --rose-light: #fce8ee;
+      --rose-deep: #d97a94;
+      --lavender: #c9b8e8;
+      --lavender-light: #ede8f7;
+      --lavender-deep: #9b84cc;
+      --peach: #f7c59f;
+      --peach-light: #fdf0e6;
+      --mint: #a8d8b9;
+      --mint-light: #e6f7ec;
+      --sand: #f9f4ef;
+      --warm-white: #fefcfa;
+      --text-dark: #3d2c35;
+      --text-mid: #7a5c68;
+      --text-soft: #b8929f;
+      --border-soft: rgba(200,160,175,0.25);
+      --gold: #e8c97a;
+    }
+
+    body {
+      background: var(--warm-white);
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text-dark);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 24px 16px 48px;
+      background-image:
+        radial-gradient(ellipse at 10% 0%, rgba(244,167,185,0.12) 0%, transparent 55%),
+        radial-gradient(ellipse at 90% 100%, rgba(201,184,232,0.12) 0%, transparent 55%);
+    }
+
+    #app {
+      width: 100%;
+      max-width: 520px;
+    }
+
+    h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .week-nav {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 18px;
+    }
+    .nav-pill {
+      background: none;
+      border: 1.5px solid var(--border-soft);
+      border-radius: 50px;
+      padding: 6px 16px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      color: var(--text-soft);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .nav-pill:hover { background: var(--rose-light); border-color: var(--rose); color: var(--rose-deep); }
+    .nav-pill:disabled { opacity: 0.3; cursor: default; }
+    .nav-pill:disabled:hover { background: none; border-color: var(--border-soft); color: var(--text-soft); }
+
+    .week-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 15px;
+      color: var(--text-mid);
+    }
+
+    .stats-row {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+      margin-bottom: 18px;
+    }
+    .stat-petal {
+      background: var(--warm-white);
+      border: 1.5px solid var(--border-soft);
+      border-radius: 18px;
+      padding: 12px 10px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-petal::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      border-radius: 18px 18px 0 0;
+    }
+    .sp-rose::before { background: linear-gradient(90deg, var(--rose), var(--peach)); }
+    .sp-lavender::before { background: linear-gradient(90deg, var(--lavender), var(--rose)); }
+    .sp-gold::before { background: linear-gradient(90deg, var(--gold), var(--peach)); }
+    .stat-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 26px;
+      font-weight: 600;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .sp-rose .stat-num { color: var(--rose-deep); }
+    .sp-lavender .stat-num { color: var(--lavender-deep); }
+    .sp-gold .stat-num { color: #c8a040; }
+    .stat-lbl { font-size: 10px; color: var(--text-soft); letter-spacing: 0.5px; text-transform: uppercase; }
+    .stat-sub { font-size: 10px; color: var(--text-soft); margin-top: 2px; }
+
+    .progress-section { margin-bottom: 18px; }
+    .progress-lbl { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-soft); margin-bottom: 6px; }
+    .progress-track { height: 7px; background: var(--rose-light); border-radius: 50px; overflow: hidden; }
+    .progress-fill {
+      height: 100%; border-radius: 50px;
+      background: linear-gradient(90deg, var(--rose), var(--lavender));
+      transition: width 0.7s cubic-bezier(0.34,1.4,0.64,1);
+    }
+
+    .perfect-banner {
+      display: none;
+      background: linear-gradient(135deg, var(--rose-light), var(--lavender-light));
+      border: 1.5px solid var(--rose);
+      border-radius: 18px;
+      padding: 16px 20px;
+      margin-bottom: 18px;
+      text-align: center;
+    }
+    .perfect-banner.show { display: block; animation: floatin 0.5s ease; }
+    @keyframes floatin { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+    .perfect-icon { font-size: 22px; margin-bottom: 4px; }
+    .perfect-title { font-family: 'Playfair Display', serif; font-size: 15px; color: var(--rose-deep); }
+    .perfect-sub { font-size: 12px; color: var(--text-soft); margin-top: 3px; }
+
+    .legend-row { display: flex; gap: 14px; margin-bottom: 14px; flex-wrap: wrap; }
+    .leg { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-soft); }
+    .leg-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+    .day-card {
+      background: var(--warm-white);
+      border: 1.5px solid var(--border-soft);
+      border-radius: 18px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      transition: border-color 0.25s;
+    }
+    .day-card.complete { border-color: rgba(168,216,185,0.6); background: linear-gradient(135deg, var(--mint-light), var(--warm-white)); }
+    .day-card.partial { border-color: rgba(247,197,159,0.6); background: linear-gradient(135deg, var(--peach-light), var(--warm-white)); }
+    .day-card.missed { border-color: rgba(244,167,185,0.4); }
+
+    .day-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .day-name { font-family: 'Playfair Display', serif; font-size: 14px; color: var(--text-dark); }
+    .day-badge {
+      font-size: 10px; padding: 3px 10px; border-radius: 50px; border: 1px solid; font-weight: 500;
+    }
+    .b-done { background: var(--mint-light); color: #4a9464; border-color: var(--mint); }
+    .b-partial { background: var(--peach-light); color: #c07840; border-color: var(--peach); }
+    .b-missed { background: var(--rose-light); color: var(--rose-deep); border-color: var(--rose); }
+    .b-rest { background: var(--sand); color: var(--text-soft); border-color: var(--border-soft); }
+
+    .workouts-row { display: flex; flex-wrap: wrap; gap: 7px; }
+
+    .workout-pill {
+      display: flex; align-items: center; gap: 7px;
+      padding: 8px 14px;
+      background: var(--sand);
+      border: 1.5px solid var(--border-soft);
+      border-radius: 50px;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      color: var(--text-mid);
+      transition: all 0.2s;
+      user-select: none;
+    }
+    .workout-pill:hover { border-color: var(--rose); color: var(--rose-deep); background: var(--rose-light); }
+    .workout-pill.done { background: var(--mint-light); border-color: var(--mint); color: #3d8a57; }
+    .workout-pill.makeup-done { background: var(--peach-light); border-color: var(--peach); color: #b07030; }
+
+    .pill-check {
+      width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid currentColor;
+      display: flex; align-items: center; justify-content: center; font-size: 9px; flex-shrink: 0;
+    }
+    .workout-pill.done .pill-check { background: #a8d8b9; border-color: #a8d8b9; color: white; }
+    .workout-pill.makeup-done .pill-check { background: var(--peach); border-color: var(--peach); color: white; }
+
+    .makeup-link {
+      font-size: 11px; color: var(--text-soft); cursor: pointer;
+      margin-top: 7px; display: inline-block;
+      text-decoration: underline; text-underline-offset: 3px;
+      text-decoration-color: var(--border-soft);
+      transition: color 0.15s;
+    }
+    .makeup-link:hover { color: var(--rose-deep); }
+
+    .rest-note { font-size: 12px; color: var(--text-soft); font-style: italic; }
+
+    .history-section { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border-soft); }
+    .history-title { font-family: 'Playfair Display', serif; font-size: 13px; color: var(--text-mid); margin-bottom: 12px; }
+    .hist-row { display: flex; align-items: center; padding: 5px 0; gap: 10px; }
+    .hist-wk { color: var(--text-soft); min-width: 78px; font-size: 11px; }
+    .hist-bar-bg { flex: 1; height: 5px; background: var(--rose-light); border-radius: 50px; overflow: hidden; }
+    .hist-bar-fill { height: 100%; border-radius: 50px; transition: width 0.4s; }
+    .hist-num { color: var(--text-mid); font-weight: 500; min-width: 30px; text-align: right; font-size: 11px; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    const SCHEDULE = {
+      Mon: ['Strength','Stretch'],
+      Tue: ['Run','Pilates'],
+      Wed: ['Pilates'],
+      Thu: ['Run','Pilates'],
+      Fri: ['Strength','Stretch'],
+      Sat: null,
+      Sun: ['Gym Strength']
+    };
+    const DAY_ORDER = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+    function getWeekKey(offset) {
+      const now = new Date(), day = now.getDay();
+      const mon = new Date(now);
+      mon.setDate(now.getDate() - (day===0?6:day-1) + offset*7);
+      return mon.toISOString().slice(0,10);
+    }
+    function getWeekLabel(offset) {
+      if (offset===0) return 'This week';
+      if (offset===-1) return 'Last week';
+      const d = new Date();
+      d.setDate(d.getDate() - (d.getDay()===0?6:d.getDay()-1) + offset*7);
+      return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    }
+
+    function loadData() { try { return JSON.parse(localStorage.getItem('wt_soft')||'{}'); } catch { return {}; } }
+    function saveData(d) { try { localStorage.setItem('wt_soft', JSON.stringify(d)); } catch {} }
+
+    let data = loadData(), weekOffset = 0;
+
+    function getWD(wk) { if (!data[wk]) data[wk]={}; return data[wk]; }
+
+    function toggle(wk, day, w, isMakeup) {
+      const wd = getWD(wk), key = day+'|'+w;
+      if (isMakeup) { if (!wd.mk) wd.mk={}; wd.mk[key]=!wd.mk[key]; }
+      else wd[key] = !wd[key];
+      saveData(data); render();
+    }
+    function toggleMk(wk, day) {
+      const wd = getWD(wk); wd['mkm_'+day]=!wd['mkm_'+day];
+      saveData(data); render();
+    }
+
+    function countDone(wk) {
+      const wd = getWD(wk); let total=0, done=0;
+      DAY_ORDER.forEach(d => {
+        const s = SCHEDULE[d]; if (!s) return;
+        s.forEach(w => { total++; if (wd[d+'|'+w]||(wd.mk&&wd.mk[d+'|'+w])) done++; });
+      });
+      return {done, total};
+    }
+    function isPerfect(wk) { const {done,total}=countDone(wk); return done===total&&total>0; }
+    function calcStreak() {
+      let streak=0, off=0;
+      while(true){ if(isPerfect(getWeekKey(off))){streak++;off--;}else break; if(off<-52)break; }
+      return streak;
+    }
+    function allTime() { return Object.keys(data).reduce((s,k)=>s+countDone(k).done,0); }
+
+    function render() {
+      const wk = getWeekKey(weekOffset);
+      const wd = getWD(wk);
+      const {done,total} = countDone(wk);
+      const pct = total>0 ? Math.round(done/total*100) : 0;
+      const perfect = done===total && total>0;
+      const streak = calcStreak();
+      let h = '';
+
+      h += `<h1>My Workout Tracker</h1>`;
+
+      h += `<div class="week-nav">
+        <button class="nav-pill" onclick="weekOffset--;render()">← earlier</button>
+        <span class="week-title">${getWeekLabel(weekOffset)}</span>
+        <button class="nav-pill" onclick="weekOffset++;render()" ${weekOffset>=0?'disabled':''}>later →</button>
+      </div>`;
+
+      h += `<div class="stats-row">
+        <div class="stat-petal sp-rose">
+          <div class="stat-num">${done}<span style="font-size:14px;opacity:0.45">/${total}</span></div>
+          <div class="stat-lbl">workouts</div>
+          <div class="stat-sub">${pct}% done</div>
+        </div>
+        <div class="stat-petal sp-gold">
+          <div class="stat-num">${streak}</div>
+          <div class="stat-lbl">week streak</div>
+          <div class="stat-sub">${streak===1?'perfect week':'perfect weeks'}</div>
+        </div>
+        <div class="stat-petal sp-lavender">
+          <div class="stat-num">${allTime()}</div>
+          <div class="stat-lbl">all-time</div>
+          <div class="stat-sub">workouts logged</div>
+        </div>
+      </div>`;
+
+      h += `<div class="progress-section">
+        <div class="progress-lbl"><span>Weekly progress</span><span>${done} of ${total}</span></div>
+        <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+      </div>`;
+
+      if (perfect && weekOffset===0) {
+        h += `<div class="perfect-banner show">
+          <div class="perfect-icon">✨</div>
+          <div class="perfect-title">Perfect week!</div>
+          <div class="perfect-sub">Every workout complete — you showed up for yourself.</div>
+        </div>`;
+      }
+
+      h += `<div class="legend-row">
+        <div class="leg"><div class="leg-dot" style="background:var(--mint)"></div>done</div>
+        <div class="leg"><div class="leg-dot" style="background:var(--peach)"></div>make-up</div>
+        <div class="leg"><div class="leg-dot" style="background:var(--border-soft)"></div>pending</div>
+      </div>`;
+
+      DAY_ORDER.forEach(day => {
+        const sched = SCHEDULE[day];
+        const allDone = sched && sched.every(w => wd[day+'|'+w]||(wd.mk&&wd.mk[day+'|'+w]));
+        const someDone = sched && sched.some(w => wd[day+'|'+w]||(wd.mk&&wd.mk[day+'|'+w]));
+        const mkMode = wd['mkm_'+day];
+
+        let cardClass = 'day-card', badge = '';
+        if (!sched) { badge=`<span class="day-badge b-rest">rest</span>`; }
+        else if (allDone) { cardClass+=' complete'; badge=`<span class="day-badge b-done">done ✓</span>`; }
+        else if (someDone) { cardClass+=' partial'; badge=`<span class="day-badge b-partial">in progress</span>`; }
+        else if (weekOffset<0) { cardClass+=' missed'; badge=`<span class="day-badge b-missed">missed</span>`; }
+
+        h += `<div class="${cardClass}"><div class="day-hdr">
+          <span class="day-name">${day}</span>${badge}
+        </div>`;
+
+        if (sched) {
+          h += `<div class="workouts-row">`;
+          sched.forEach(w => {
+            const key=day+'|'+w, isDone=!!wd[key], isMkDone=!!(wd.mk&&wd.mk[key]);
+            const cls = isDone?'done':isMkDone?'makeup-done':'';
+            const chk = (isDone||isMkDone)?'✓':'';
+            h += `<div class="workout-pill ${cls}" onclick="toggle('${wk}','${day}','${w}',${isMkDone&&!isDone})">
+              <div class="pill-check">${chk}</div>${w}
+            </div>`;
+          });
+          h += `</div>`;
+          if (!allDone) {
+            h += `<span class="makeup-link" onclick="toggleMk('${wk}','${day}')">${mkMode?'cancel make-up':'+ log as make-up'}</span>`;
+            if (mkMode) h += `<div style="font-size:11px;color:var(--text-soft);margin-top:4px;">Tap a workout above to mark as make-up.</div>`;
+          }
+        } else {
+          h += `<div class="rest-note">Time to rest and recover ♡</div>`;
+        }
+        h += `</div>`;
+      });
+
+      const histWeeks = [];
+      for (let i=-1;i>=-8;i--) {
+        const k=getWeekKey(i), {done:d,total:t}=countDone(k);
+        if (t>0) histWeeks.push({label:getWeekLabel(i),done:d,total:t});
+      }
+      if (histWeeks.length>0) {
+        h += `<div class="history-section"><div class="history-title">Past weeks</div>`;
+        histWeeks.forEach(hw => {
+          const p=Math.round(hw.done/hw.total*100);
+          const col = hw.done===hw.total?'var(--mint)':hw.done>0?'var(--peach)':'var(--rose)';
+          h += `<div class="hist-row">
+            <span class="hist-wk">${hw.label}</span>
+            <div class="hist-bar-bg"><div class="hist-bar-fill" style="width:${p}%;background:${col}"></div></div>
+            <span class="hist-num">${hw.done}/${hw.total}</span>
+          </div>`;
+        });
+        h += `</div>`;
+      }
+
+      document.getElementById('app').innerHTML = h;
+    }
+    render();
+  </script>
+</body>
+</html>
